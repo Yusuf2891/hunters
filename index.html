@@ -60,7 +60,6 @@
 
     const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const emailEl = document.getElementById("email");
@@ -75,6 +74,7 @@
     }
     checkSession();
 
+    // LOGIN
     loginBtn.addEventListener("click", async () => {
       const email = emailEl.value.trim();
       const password = passwordEl.value.trim();
@@ -87,6 +87,7 @@
       window.location.href = "dashboard.html";
     });
 
+    // REGISTER + AUTO INSERT PROFILE
     registerLink.addEventListener("click", async () => {
       const email = prompt("Masukkan email:");
       const password = prompt("Masukkan password:");
@@ -95,7 +96,29 @@
       try {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert("Pendaftaran berhasil! Silakan verifikasi email Anda sebelum login.");
+
+        // Tunggu session user
+        const user = data.user;
+        if (!user) {
+          alert("Pendaftaran berhasil! Silakan verifikasi email Anda sebelum login.");
+          return;
+        }
+
+        // Auto insert profil ke tabel "profiles"
+        const { error: insertError } = await supabase.from("profiles").insert({
+          id: user.id,
+          username: email.split("@")[0],
+          level: 1,
+          xp: 0,
+          next_level_xp: 100,
+        });
+
+        if (insertError) {
+          console.error("Gagal buat profil:", insertError);
+          alert("Akun dibuat, tapi gagal menambahkan profil. Silakan hubungi admin.");
+        } else {
+          alert("Pendaftaran berhasil! Profil berhasil dibuat 🎉");
+        }
       } catch (err) {
         alert("Gagal daftar: " + err.message);
         console.error(err);
