@@ -2,149 +2,209 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <title>🎮 RPG Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HunterVerse — Dashboard</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@400;600&display=swap');
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
+  <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: radial-gradient(circle at center, #0a0f1e, #05080f);
-      color: #e6eef6;
       margin: 0;
       padding: 0;
+      background: radial-gradient(circle at center, #0a0f1f, #000);
+      color: #d8faff;
+      font-family: 'Rajdhani', sans-serif;
       height: 100vh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      background-image: url('https://i.ibb.co/F4x0cbH/space-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      backdrop-filter: blur(2px);
+      align-items: center;
+      overflow-y: auto;
     }
 
     .hud {
-      background: rgba(0,0,0,0.6);
-      border: 1px solid rgba(0,255,224,0.2);
-      border-radius: 16px;
-      padding: 24px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(0, 255, 224, 0.2);
+      box-shadow: 0 0 25px rgba(0, 255, 224, 0.2);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 700px;
       text-align: center;
-      box-shadow: 0 0 25px rgba(0,255,224,0.1);
-      width: 340px;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(10px);
     }
 
     h1 {
       font-family: 'Orbitron', sans-serif;
       color: #00ffe0;
-      text-shadow: 0 0 12px #00ffe0;
+      font-size: 28px;
       margin-bottom: 10px;
     }
 
-    .avatar {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      border: 3px solid #00ffe0;
-      margin-bottom: 10px;
-      object-fit: cover;
+    .player-info {
+      background: rgba(0, 255, 224, 0.05);
+      border: 1px solid rgba(0, 255, 224, 0.2);
+      border-radius: 15px;
+      padding: 15px;
+      margin-top: 10px;
     }
 
-    .stat {
-      text-align: left;
-      margin-top: 12px;
-    }
-
-    .bar {
-      height: 10px;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.1);
-      margin-top: 4px;
+    .xp-bar {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
       overflow: hidden;
+      height: 12px;
+      margin-top: 10px;
     }
 
-    .hp { background: linear-gradient(90deg, #ff0044, #ff8c00); width: 90%; height: 10px; }
-    .xp { background: linear-gradient(90deg, #00ffe0, #0070ff); width: 45%; height: 10px; }
-    .gold { background: linear-gradient(90deg, #ffd700, #ffaa00); width: 70%; height: 10px; }
+    .xp-fill {
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, #00ffe0, #00aaff);
+      transition: width 0.3s;
+    }
+
+    .quest-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0,255,224,0.2);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 10px;
+      box-shadow: 0 0 10px rgba(0,255,224,0.1);
+      transition: transform 0.2s ease;
+      text-align: left;
+    }
+
+    .quest-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 20px rgba(0,255,224,0.3);
+    }
+
+    .quest-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 16px;
+      color: #00ffe0;
+      margin-bottom: 5px;
+    }
+
+    .quest-desc {
+      font-size: 14px;
+      color: #b8c7d1;
+    }
+
+    .quest-reward {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #ffd700;
+    }
 
     .btn {
-      margin-top: 16px;
-      background: #00ffe0;
-      color: #021313;
-      font-weight: 600;
+      margin-top: 20px;
+      padding: 10px 20px;
       border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #00ffe0, #0077ff);
+      color: #000;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 600;
       cursor: pointer;
-      width: 100%;
-      transition: all 0.2s ease;
+      transition: 0.3s;
     }
 
-    .btn:hover { background: #00c2ac; transform: scale(1.05); }
-
-    .actions {
-      display: grid;
-      gap: 8px;
-      margin-top: 20px;
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00ffe0;
     }
   </style>
 </head>
 <body>
+
   <div class="hud">
-    <img src="https://i.ibb.co/8c1Hw6x/avatar.png" alt="Avatar" class="avatar">
-    <h1 id="playerName">Hunter-X</h1>
-    <p>Rank: <span id="rank">Novice</span></p>
+    <h1>🏹 RPG QUEST DASHBOARD</h1>
 
-    <div class="stat">
-      <label>HP</label>
-      <div class="bar"><div class="hp"></div></div>
-    </div>
-    <div class="stat">
-      <label>XP</label>
-      <div class="bar"><div class="xp"></div></div>
-    </div>
-    <div class="stat">
-      <label>Gold</label>
-      <div class="bar"><div class="gold"></div></div>
+    <div id="player-info" class="player-info">
+      <p>Memuat profil pemain...</p>
     </div>
 
-    <div class="actions">
-      <button class="btn">⚔️ Mulai Quest</button>
-      <button class="btn">🎒 Lihat Inventory</button>
-      <button class="btn" id="logoutBtn">🚪 Keluar</button>
-    </div>
+    <button id="logout" class="btn">Logout</button>
+
+    <h2 style="margin-top: 30px; color: #00ffe0; font-family: 'Orbitron', sans-serif;">📜 Daftar Quest</h2>
+    <div id="quest-list" style="margin-top: 10px;"></div>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    // 🔗 Ganti ini dengan kredensial Supabase kamu
+    const supabaseUrl = "https://YOUR-PROJECT.supabase.co";
+    const supabaseAnonKey = "YOUR-ANON-KEY";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-    const supabase = createClient(
-      'https://xkvqyxkuoodifkqobzym.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI'
-    );
+    // Ambil session aktif
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = "index.html"; // balik ke login
+    }
 
-    const logoutBtn = document.getElementById('logoutBtn');
-    const playerName = document.getElementById('playerName');
-    const rank = document.getElementById('rank');
-
+    // 🔹 Muat profil pemain
     async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = 'index.html';
+      const playerBox = document.getElementById('player-info');
+      const user = session.user;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        playerBox.innerHTML = `<p style="color:red;">⚠️ ${error.message}</p>`;
         return;
       }
 
-      playerName.textContent = user.email.split('@')[0];
-      rank.textContent = "Apprentice Hunter";
+      const xpPercent = Math.min((data.xp / data.next_level_xp) * 100, 100);
+
+      playerBox.innerHTML = `
+        <h3>${data.username || 'Adventurer'}</h3>
+        <p>Level: ${data.level} | XP: ${data.xp}/${data.next_level_xp}</p>
+        <div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%"></div></div>
+      `;
     }
 
-    loadProfile();
+    // 🔹 Muat daftar quest
+    async function loadQuests() {
+      const questList = document.getElementById('quest-list');
+      questList.innerHTML = '<p>🔄 Memuat quest...</p>';
 
-    logoutBtn.onclick = async () => {
+      const { data: quests, error } = await supabase
+        .from('quests')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        questList.innerHTML = `<p style="color:red;">⚠️ Gagal memuat quest: ${error.message}</p>`;
+        return;
+      }
+
+      if (!quests || quests.length === 0) {
+        questList.innerHTML = '<p>Belum ada quest tersedia.</p>';
+        return;
+      }
+
+      questList.innerHTML = quests.map(q => `
+        <div class="quest-card">
+          <div class="quest-title">🧭 ${q.title}</div>
+          <div class="quest-desc">${q.description}</div>
+          <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
+        </div>
+      `).join('');
+    }
+
+    // Logout
+    document.getElementById('logout').addEventListener('click', async () => {
       await supabase.auth.signOut();
-      window.location.href = 'index.html';
-    };
+      window.location.href = "index.html";
+    });
+
+    loadProfile();
+    loadQuests();
   </script>
 </body>
 </html>
