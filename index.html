@@ -1,30 +1,24 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HunterVerse — Login</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: Poppins, sans-serif;
       background: radial-gradient(circle at top, #0b1220, #050910);
       color: #e6eef6;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
     }
-    h1 {
-      color: #00ffe0;
-      text-shadow: 0 0 12px #00ffe0;
-      margin-bottom: 16px;
-    }
     .card {
-      background: rgba(255,255,255,0.06);
-      padding: 28px;
-      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      padding: 24px;
+      border-radius: 12px;
       min-width: 320px;
       text-align: center;
       box-shadow: 0 0 20px rgba(0,0,0,0.4);
@@ -36,13 +30,10 @@
       border-radius: 8px;
       width: 100%;
       font-size: 15px;
-      background: rgba(255,255,255,0.1);
-      color: #e6eef6;
     }
-    input:focus { outline: 2px solid #00ffe0; }
     button {
       margin-top: 18px;
-      padding: 10px 18px;
+      padding: 10px;
       border: 0;
       border-radius: 8px;
       background: #00ffe0;
@@ -50,73 +41,66 @@
       font-weight: 600;
       cursor: pointer;
       width: 100%;
-      transition: 0.2s;
     }
-    button:hover { background: #00c2ac; transform: scale(1.05); }
-    .info { margin-top: 12px; color: #9fb0b9; font-size: 14px; }
+    button:hover { background: #00c2ac; transform: scale(1.03); }
+    a { color: #00ffe0; cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Login HunterVerse</h1>
+    <h2>Login HunterVerse</h2>
     <input id="email" type="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
     <button id="loginBtn">Masuk</button>
-    <p class="info">Belum punya akun? <a href="#" id="registerLink" style="color:#00ffe0">Daftar</a></p>
+    <p>Belum punya akun? <a id="registerLink">Daftar</a></p>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // Konfigurasi Supabase
-    const SUPABASE_URL = 'https://xkvqyxkuoodifkqobzym.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI';
+    const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const emailEl = document.getElementById('email');
-    const passwordEl = document.getElementById('password');
-    const loginBtn = document.getElementById('loginBtn');
-    const registerLink = document.getElementById('registerLink');
+    const emailEl = document.getElementById("email");
+    const passwordEl = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const registerLink = document.getElementById("registerLink");
 
+    // Cek session login
     async function checkSession() {
       const { data, error } = await supabase.auth.getSession();
-      if (data?.session) {
-        window.location.href = 'dashboard.html';
-      }
+      if (data?.session) window.location.href = "dashboard.html";
     }
-
     checkSession();
 
-    loginBtn.onclick = async () => {
+    loginBtn.addEventListener("click", async () => {
       const email = emailEl.value.trim();
       const password = passwordEl.value.trim();
-
-      if (!email || !password) return alert('Isi email dan password!');
+      if (!email || !password) return alert("Isi email dan password!");
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('Gagal login: ' + error.message);
-      } else {
-        alert('Berhasil login!');
-        window.location.href = 'dashboard.html';
+      if (error) return alert("Gagal login: " + error.message);
+
+      alert("Berhasil login!");
+      window.location.href = "dashboard.html";
+    });
+
+    registerLink.addEventListener("click", async () => {
+      const email = prompt("Masukkan email:");
+      const password = prompt("Masukkan password:");
+      if (!email || !password) return alert("Isi email dan password!");
+
+      try {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        alert("Pendaftaran berhasil! Silakan verifikasi email Anda sebelum login.");
+      } catch (err) {
+        alert("Gagal daftar: " + err.message);
+        console.error(err);
       }
-    };
-
-    registerLink.onclick = async (e) => {
-      e.preventDefault();
-      const email = prompt('Masukkan email baru:');
-      const password = prompt('Masukkan password baru:');
-
-      if (!email || !password) return alert('Email dan password wajib diisi!');
-
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        alert('Gagal daftar: ' + error.message);
-      } else {
-        alert('Pendaftaran berhasil! Silakan periksa email untuk verifikasi.');
-      }
-    };
+    });
   </script>
 </body>
 </html>
