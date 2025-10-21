@@ -2,10 +2,9 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>🎮 RPG Dashboard</title>
+  <title>🎮 HunterVerse Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     body {
@@ -117,9 +116,8 @@
   </style>
 </head>
 <body>
-
   <div class="hud">
-    <h1>🏹 RPG QUEST DASHBOARD</h1>
+    <h1>🏹 HUNTERVERSE QUEST DASHBOARD</h1>
 
     <div id="player-info" class="player-info">
       <p>Memuat profil pemain...</p>
@@ -132,80 +130,88 @@
   </div>
 
   <script type="module">
-    // 🔗 Ganti ini dengan kredensial Supabase kamu
-    const supabaseUrl = "https://YOUR-PROJECT.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // Ambil session aktif
-    const { data: { session } } = await supabase.auth.getSession();
+    const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Cek session aktif
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const session = sessionData.session;
     if (!session) {
-      window.location.href = "index.html"; // balik ke login
+      console.warn("Tidak ada sesi aktif, kembali ke login...");
+      window.location.href = "index.html";
     }
 
-    // 🔹 Muat profil pemain
+    // Muat profil pemain
     async function loadProfile() {
-      const playerBox = document.getElementById('player-info');
+      const playerBox = document.getElementById("player-info");
       const user = session.user;
 
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
       if (error) {
         playerBox.innerHTML = `<p style="color:red;">⚠️ ${error.message}</p>`;
+        console.error("Profile error:", error);
         return;
       }
 
       const xpPercent = Math.min((data.xp / data.next_level_xp) * 100, 100);
 
       playerBox.innerHTML = `
-        <h3>${data.username || 'Adventurer'}</h3>
+        <h3>${data.username || "Adventurer"}</h3>
         <p>Level: ${data.level} | XP: ${data.xp}/${data.next_level_xp}</p>
         <div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%"></div></div>
       `;
     }
 
-    // 🔹 Muat daftar quest
+    // Muat daftar quest
     async function loadQuests() {
-      const questList = document.getElementById('quest-list');
-      questList.innerHTML = '<p>🔄 Memuat quest...</p>';
+      const questList = document.getElementById("quest-list");
+      questList.innerHTML = "<p>🔄 Memuat quest...</p>";
 
       const { data: quests, error } = await supabase
-        .from('quests')
-        .select('*')
-        .order('id', { ascending: true });
+        .from("quests")
+        .select("*")
+        .order("id", { ascending: true });
 
       if (error) {
         questList.innerHTML = `<p style="color:red;">⚠️ Gagal memuat quest: ${error.message}</p>`;
+        console.error("Quest load error:", error);
         return;
       }
 
       if (!quests || quests.length === 0) {
-        questList.innerHTML = '<p>Belum ada quest tersedia.</p>';
+        questList.innerHTML = "<p>Belum ada quest tersedia.</p>";
         return;
       }
 
-      questList.innerHTML = quests.map(q => `
+      questList.innerHTML = quests
+        .map(
+          (q) => `
         <div class="quest-card">
           <div class="quest-title">🧭 ${q.title}</div>
           <div class="quest-desc">${q.description}</div>
           <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
-        </div>
-      `).join('');
+        </div>`
+        )
+        .join("");
     }
 
-    // Logout
-    document.getElementById('logout').addEventListener('click', async () => {
+    // Tombol Logout
+    document.getElementById("logout").addEventListener("click", async () => {
       await supabase.auth.signOut();
       window.location.href = "index.html";
     });
 
-    loadProfile();
-    loadQuests();
+    // Jalankan
+    await loadProfile();
+    await loadQuests();
   </script>
 </body>
 </html>
-
