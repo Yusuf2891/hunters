@@ -74,7 +74,7 @@
     }
 
     .quest-card:hover {
-      transform: scale(1.03);
+      transform: scale(1.05);
       box-shadow: 0 0 20px rgba(0,255,224,0.3);
     }
 
@@ -141,31 +141,65 @@
     const session = sessionData.session;
     if (!session) {
       console.warn("Tidak ada sesi aktif, kembali ke login...");
-      window.location.href = "index.html";
+      window.location.href = window.location.origin;
+      return; // <-- FIX: Mencegah eksekusi kode lebih lanjut jika tidak ada sesi
     }
 
     // Muat profil pemain
     async function loadProfile() {
       const playerBox = document.getElementById("player-info");
       const user = session.user;
-
-      const { data, error } = await supabase
+      
+      // Mengubah .single() menjadi get() dan kemudian memeriksa hasilnya
+      const { data: profiles, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
-        .single();
+        .eq("id", user.id);
 
       if (error) {
-        playerBox.innerHTML = `<p style="color:red;">⚠️ ${error.message}</p>`;
-        console.error("Profile error:", error);
+        // Ini adalah error database non-kosong, tetap tampilkan
+        playerBox.innerHTML = `<p style="color:red;">⚠️ Gagal memuat profil: ${error.message}</p>`;
+        console.error("Profile fetch error:", error);
         return;
       }
 
-      const xpPercent = Math.min((data.xp / data.next_level_xp) * 100, 100);
+      let profileData;
+
+      if (profiles.length > 0) {
+        // Kasus 1: Data profile ditemukan
+        profileData = profiles[0];
+      } else {
+        // Kasus 2: Data profile TIDAK ditemukan (inilah yang menyebabkan error sebelumnya)
+        
+        // Atur data default
+        profileData = {
+          id: user.id,
+          username: "New Hunter",
+          level: 1,
+          xp: 0,
+          next_level_xp: 100
+        };
+        
+        // (Opsional) Langsung buat data profile baru di Supabase untuk mencegah error di masa depan
+        console.log("Membuat profile baru untuk pengguna ini...");
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert([profileData]);
+
+        if (insertError) {
+          console.error("Gagal membuat profile baru:", insertError);
+          playerBox.innerHTML = `<p style="color:orange;">⚠️ Profile baru gagal dibuat, menggunakan data default.</p>`;
+        } else {
+           console.log("Profile baru berhasil dibuat.");
+        }
+      }
+
+      // Gunakan profileData, baik yang dari database maupun yang default
+      const xpPercent = Math.min((profileData.xp / profileData.next_level_xp) * 100, 100);
 
       playerBox.innerHTML = `
-        <h3>${data.username || "Adventurer"}</h3>
-        <p>Level: ${data.level} | XP: ${data.xp}/${data.next_level_xp}</p>
+        <h3>${profileData.username || "Adventurer"} (ID: ${user.id.substring(0, 8)}...)</h3>
+        <p>Level: ${profileData.level} | XP: ${profileData.xp}/${profileData.next_level_xp}</p>
         <div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%"></div></div>
       `;
     }
@@ -194,11 +228,11 @@
       questList.innerHTML = quests
         .map(
           (q) => `
-        <div class="quest-card">
-          <div class="quest-title">🧭 ${q.title}</div>
-          <div class="quest-desc">${q.description}</div>
-          <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
-        </div>`
+          <div class="quest-card">
+            <div class="quest-title">🧭 ${q.title}</div>
+            <div class="quest-desc">${q.description}</div>
+            <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
+          </div>`
         )
         .join("");
     }
@@ -206,7 +240,7 @@
     // Tombol Logout
     document.getElementById("logout").addEventListener("click", async () => {
       await supabase.auth.signOut();
-      window.location.href = "index.html";
+      window.location.href = window.location.origin;
     });
 
     // Jalankan
