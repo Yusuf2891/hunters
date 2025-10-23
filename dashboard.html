@@ -10,24 +10,23 @@
     body {
       margin: 0;
       padding: 0;
-      background: radial-gradient(circle at center, #0a0f1f, #000);
+      background: radial-gradient(circle at top, #0a0f1f, #000);
       color: #d8faff;
       font-family: 'Rajdhani', sans-serif;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow-y: auto;
     }
 
     .hud {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(0, 255, 224, 0.2);
-      box-shadow: 0 0 25px rgba(0, 255, 224, 0.2);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(0,255,224,0.2);
+      box-shadow: 0 0 25px rgba(0,255,224,0.2);
       border-radius: 20px;
       padding: 30px;
       width: 90%;
-      max-width: 700px;
+      max-width: 750px;
       text-align: center;
       backdrop-filter: blur(10px);
     }
@@ -35,16 +34,18 @@
     h1 {
       font-family: 'Orbitron', sans-serif;
       color: #00ffe0;
-      font-size: 28px;
-      margin-bottom: 10px;
+      font-size: 26px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px #00ffe0;
     }
 
     .player-info {
       background: rgba(0, 255, 224, 0.05);
-      border: 1px solid rgba(0, 255, 224, 0.2);
+      border: 1px solid rgba(0, 255, 224, 0.3);
       border-radius: 15px;
       padding: 15px;
       margin-top: 10px;
+      box-shadow: 0 0 15px rgba(0,255,224,0.1);
     }
 
     .xp-bar {
@@ -57,32 +58,43 @@
 
     .xp-fill {
       height: 100%;
-      width: 50%;
+      width: 30%;
       background: linear-gradient(90deg, #00ffe0, #00aaff);
-      transition: width 0.3s;
+      transition: width 0.6s ease;
+    }
+
+    .quest-section {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .quest-section h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffe0;
+      text-align: center;
+      font-size: 20px;
     }
 
     .quest-card {
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(0,255,224,0.2);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 15px;
-      margin-top: 10px;
+      margin-top: 12px;
       box-shadow: 0 0 10px rgba(0,255,224,0.1);
       transition: transform 0.2s ease;
-      text-align: left;
     }
 
     .quest-card:hover {
       transform: scale(1.03);
-      box-shadow: 0 0 20px rgba(0,255,224,0.3);
+      box-shadow: 0 0 20px rgba(0,255,224,0.4);
     }
 
     .quest-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
       color: #00ffe0;
-      margin-bottom: 5px;
+      font-size: 16px;
+      margin-bottom: 4px;
     }
 
     .quest-desc {
@@ -91,14 +103,14 @@
     }
 
     .quest-reward {
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 13px;
       color: #ffd700;
     }
 
     .btn {
-      margin-top: 20px;
-      padding: 10px 20px;
+      margin-top: 25px;
+      padding: 10px 22px;
       border: none;
       border-radius: 10px;
       background: linear-gradient(90deg, #00ffe0, #0077ff);
@@ -113,6 +125,17 @@
       transform: scale(1.05);
       box-shadow: 0 0 10px #00ffe0;
     }
+
+    .error {
+      color: #ff6060;
+      font-size: 14px;
+      background: rgba(255,0,0,0.1);
+      border: 1px solid rgba(255,0,0,0.3);
+      padding: 8px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
   </style>
 </head>
 <body>
@@ -120,13 +143,17 @@
     <h1>🏹 HUNTERVERSE QUEST DASHBOARD</h1>
 
     <div id="player-info" class="player-info">
-      <p>Memuat profil pemain...</p>
+      <h3>Adventurer</h3>
+      <p>Level: 1 | XP: 0 / 100</p>
+      <div class="xp-bar"><div class="xp-fill"></div></div>
     </div>
 
     <button id="logout" class="btn">Logout</button>
 
-    <h2 style="margin-top: 30px; color: #00ffe0; font-family: 'Orbitron', sans-serif;">📜 Daftar Quest</h2>
-    <div id="quest-list" style="margin-top: 10px;"></div>
+    <div class="quest-section">
+      <h2>📜 Daftar Quest</h2>
+      <div id="quest-list"><p>🔄 Memuat quest...</p></div>
+    </div>
   </div>
 
   <script type="module">
@@ -136,53 +163,22 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Cek session aktif
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    // Cek session login
+    const { data: sessionData } = await supabase.auth.getSession();
     const session = sessionData.session;
-    if (!session) {
-      console.warn("Tidak ada sesi aktif, kembali ke login...");
-      window.location.href = "index.html";
-    }
+    if (!session) window.location.href = "index.html";
 
-    // Muat profil pemain
-    async function loadProfile() {
-      const playerBox = document.getElementById("player-info");
-      const user = session.user;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        playerBox.innerHTML = `<p style="color:red;">⚠️ ${error.message}</p>`;
-        console.error("Profile error:", error);
-        return;
-      }
-
-      const xpPercent = Math.min((data.xp / data.next_level_xp) * 100, 100);
-
-      playerBox.innerHTML = `
-        <h3>${data.username || "Adventurer"}</h3>
-        <p>Level: ${data.level} | XP: ${data.xp}/${data.next_level_xp}</p>
-        <div class="xp-bar"><div class="xp-fill" style="width:${xpPercent}%"></div></div>
-      `;
-    }
-
-    // Muat daftar quest
+    // Fungsi ambil daftar quest
     async function loadQuests() {
       const questList = document.getElementById("quest-list");
-      questList.innerHTML = "<p>🔄 Memuat quest...</p>";
-
       const { data: quests, error } = await supabase
         .from("quests")
         .select("*")
-        .order("id", { ascending: true });
+        .order("created_at", { ascending: true });
 
       if (error) {
-        questList.innerHTML = `<p style="color:red;">⚠️ Gagal memuat quest: ${error.message}</p>`;
-        console.error("Quest load error:", error);
+        questList.innerHTML = `<div class="error">⚠️ Gagal memuat quest: ${error.message}</div>`;
+        console.error("Quest error:", error);
         return;
       }
 
@@ -191,27 +187,22 @@
         return;
       }
 
-      questList.innerHTML = quests
-        .map(
-          (q) => `
+      questList.innerHTML = quests.map(q => `
         <div class="quest-card">
           <div class="quest-title">🧭 ${q.title}</div>
           <div class="quest-desc">${q.description}</div>
           <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
-        </div>`
-        )
-        .join("");
+        </div>
+      `).join("");
     }
 
-    // Tombol Logout
+    // Logout
     document.getElementById("logout").addEventListener("click", async () => {
       await supabase.auth.signOut();
       window.location.href = "index.html";
     });
 
-    // Jalankan
-    await loadProfile();
-    await loadQuests();
+    loadQuests();
   </script>
 </body>
 </html>
