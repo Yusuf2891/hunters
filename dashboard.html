@@ -1,208 +1,139 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>🎮 HunterVerse Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HunterVerse Quest Dashboard</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
-      background: radial-gradient(circle at top, #0a0f1f, #000);
-      color: #d8faff;
-      font-family: 'Rajdhani', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .hud {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(0,255,224,0.2);
-      box-shadow: 0 0 25px rgba(0,255,224,0.2);
-      border-radius: 20px;
-      padding: 30px;
-      width: 90%;
-      max-width: 750px;
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #0b1220, #050910);
+      color: #e6eef6;
       text-align: center;
-      backdrop-filter: blur(10px);
     }
-
+    .container {
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 20px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(0,255,255,0.08);
+    }
     h1 {
-      font-family: 'Orbitron', sans-serif;
       color: #00ffe0;
-      font-size: 26px;
-      margin-bottom: 15px;
       text-shadow: 0 0 10px #00ffe0;
+      font-size: 1.6em;
+      margin-bottom: 10px;
     }
-
-    .player-info {
-      background: rgba(0, 255, 224, 0.05);
-      border: 1px solid rgba(0, 255, 224, 0.3);
-      border-radius: 15px;
-      padding: 15px;
-      margin-top: 10px;
-      box-shadow: 0 0 15px rgba(0,255,224,0.1);
-    }
-
-    .xp-bar {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      overflow: hidden;
-      height: 12px;
-      margin-top: 10px;
-    }
-
-    .xp-fill {
-      height: 100%;
-      width: 30%;
-      background: linear-gradient(90deg, #00ffe0, #00aaff);
-      transition: width 0.6s ease;
-    }
-
-    .quest-section {
-      margin-top: 30px;
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
       text-align: left;
     }
-
-    .quest-section h2 {
-      font-family: 'Orbitron', sans-serif;
-      color: #00ffe0;
-      text-align: center;
-      font-size: 20px;
-    }
-
-    .quest-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(0,255,224,0.2);
-      border-radius: 12px;
-      padding: 15px;
-      margin-top: 12px;
-      box-shadow: 0 0 10px rgba(0,255,224,0.1);
-      transition: transform 0.2s ease;
-    }
-
-    .quest-card:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 20px rgba(0,255,224,0.4);
-    }
-
-    .quest-title {
-      font-family: 'Orbitron', sans-serif;
-      color: #00ffe0;
-      font-size: 16px;
-      margin-bottom: 4px;
-    }
-
-    .quest-desc {
-      font-size: 14px;
-      color: #b8c7d1;
-    }
-
-    .quest-reward {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #ffd700;
-    }
-
-    .btn {
-      margin-top: 25px;
-      padding: 10px 22px;
+    .logout {
+      background: #00ffe0;
       border: none;
-      border-radius: 10px;
-      background: linear-gradient(90deg, #00ffe0, #0077ff);
-      color: #000;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px #00ffe0;
-    }
-
-    .error {
-      color: #ff6060;
-      font-size: 14px;
-      background: rgba(255,0,0,0.1);
-      border: 1px solid rgba(255,0,0,0.3);
-      padding: 8px;
+      color: #011a18;
+      font-weight: bold;
       border-radius: 8px;
-      margin-top: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      margin-top: 20px;
     }
-
+    .logout:hover { background: #00c2ac; transform: scale(1.03); }
   </style>
 </head>
 <body>
-  <div class="hud">
-    <h1>🏹 HUNTERVERSE QUEST DASHBOARD</h1>
-
-    <div id="player-info" class="player-info">
-      <h3>Adventurer</h3>
-      <p>Level: 1 | XP: 0 / 100</p>
-      <div class="xp-bar"><div class="xp-fill"></div></div>
-    </div>
-
-    <button id="logout" class="btn">Logout</button>
-
-    <div class="quest-section">
-      <h2>📜 Daftar Quest</h2>
-      <div id="quest-list"><p>🔄 Memuat quest...</p></div>
-    </div>
+  <div class="container">
+    <h1>HUNTERVERSE QUEST DASHBOARD</h1>
+    <h3 id="username">Adventurer</h3>
+    <p id="levelInfo">Level: 1 | XP: 0 / 100</p>
+    <button class="logout" id="logoutBtn">Logout</button>
+    <h2 style="margin-top:30px;">Daftar Quest</h2>
+    <div id="questContainer"><p>Belum ada quest tersedia.</p></div>
   </div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+    // --- Supabase setup ---
     const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Cek session login
-    const { data: sessionData } = await supabase.auth.getSession();
-    const session = sessionData.session;
-    if (!session) window.location.href = "index.html";
+    // --- Cek sesi login ---
+    async function checkSession() {
+      const { data, error } = await supabase.auth.getSession();
+      if (!data.session) {
+        window.location.href = "login.html";
+        return;
+      }
+      const user = data.session.user;
+      document.getElementById("username").textContent = user.email.split("@")[0];
+      loadProfile(user.id);
+      loadQuests();
+    }
 
-    // Fungsi ambil daftar quest
+    // --- Ambil profil dari tabel profiles ---
+    async function loadProfile(userId) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("level, xp, next_level_xp")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.warn("Gagal memuat profil:", error.message);
+        return;
+      }
+
+      document.getElementById("levelInfo").textContent =
+        `Level: ${data.level} | XP: ${data.xp} / ${data.next_level_xp}`;
+    }
+
+    // --- Ambil semua quest ---
     async function loadQuests() {
-      const questList = document.getElementById("quest-list");
-      const { data: quests, error } = await supabase
+      const questContainer = document.getElementById("questContainer");
+      questContainer.innerHTML = "<p>Memuat quest...</p>";
+
+      const { data, error } = await supabase
         .from("quests")
         .select("*")
         .order("created_at", { ascending: true });
 
       if (error) {
-        questList.innerHTML = `<div class="error">⚠️ Gagal memuat quest: ${error.message}</div>`;
-        console.error("Quest error:", error);
+        console.error("Error ambil quest:", error);
+        questContainer.innerHTML = "<p style='color:red;'>Gagal memuat quest.</p>";
         return;
       }
 
-      if (!quests || quests.length === 0) {
-        questList.innerHTML = "<p>Belum ada quest tersedia.</p>";
+      if (!data || data.length === 0) {
+        questContainer.innerHTML = "<p>Belum ada quest tersedia.</p>";
         return;
       }
 
-      questList.innerHTML = quests.map(q => `
-        <div class="quest-card">
-          <div class="quest-title">🧭 ${q.title}</div>
-          <div class="quest-desc">${q.description}</div>
-          <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
+      questContainer.innerHTML = data.map(q => `
+        <div class="card">
+          <h3 style="color:#00ffe0;">${q.title}</h3>
+          <p>${q.description}</p>
+          <p>🎯 Kesulitan: ${q.difficulty}</p>
+          <p>💎 Hadiah: ${q.reward} XP</p>
         </div>
-      `).join("");
+      `).join('');
     }
 
-    // Logout
-    document.getElementById("logout").addEventListener("click", async () => {
+    // --- Tombol logout ---
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
       await supabase.auth.signOut();
-      window.location.href = "index.html";
+      window.location.href = "login.html";
     });
 
-    loadQuests();
+    // --- Jalankan ---
+    checkSession();
   </script>
 </body>
 </html>
