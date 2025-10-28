@@ -153,6 +153,28 @@
         window.location.href = "index.html";
         return;
       }
+      // 🔹 Pastikan profil user sudah ada di tabel
+const { data: userData } = await supabase.auth.getUser();
+const user = userData.user;
+
+const { data: existingProfile } = await supabase
+  .from("profiles")
+  .select("*")
+  .eq("id", user.id)
+  .single();
+
+if (!existingProfile) {
+  await supabase.from("profiles").insert([
+    {
+      id: user.id,
+      username: user.email || "Player",
+      level: 1,
+      xp: 0,
+      next_level: 100,
+      created_at: new Date(),
+    },
+  ]);
+  console.log("✅ Profil baru dibuat untuk", user.email);
 
       async function loadQuests() {
         const questList = document.getElementById("quest-list");
@@ -293,3 +315,4 @@
   </script>
 </body>
 </html>
+
