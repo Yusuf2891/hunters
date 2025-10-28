@@ -235,6 +235,12 @@
           <div class="quest-title">🧭 ${q.title}</div>
           <div class="quest-desc">${q.description}</div>
           <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
+          <button
+      onClick={() => handleCompleteQuest(quest)}
+      className="mt-3 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-xl text-sm transition-all"
+    >
+      ✅ Selesaikan
+    </button>
         </div>
       `).join("");
 
@@ -284,3 +290,4 @@
   </script>
 </body>
 </html>
+
