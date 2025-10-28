@@ -137,182 +137,197 @@
     </div>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ <script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
+  const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData.session;
-      if (!session) {
-        window.location.href = "index.html";
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 🔐 Cek session login
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData.session;
+    if (!session) {
+      window.location.href = "index.html";
+      return;
+    }
+
+    // ✅ Pastikan profil user sudah ada di tabel
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      await supabase.from("profiles").insert([
+        {
+          id: user.id,
+          username: user.email || "Player",
+          level: 1,
+          xp: 0,
+          next_level: 100,
+          created_at: new Date(),
+        },
+      ]);
+      console.log("✅ Profil baru dibuat untuk", user.email);
+    }
+
+    // 🔹 Fungsi load quest
+    async function loadQuests() {
+      const questList = document.getElementById("quest-list");
+      const { data: quests, error } = await supabase
+        .from("quests")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        questList.innerHTML = `<div class="error">⚠️ Gagal memuat quest: ${error.message}</div>`;
+        console.error(error);
         return;
       }
-      // 🔹 Pastikan profil user sudah ada di tabel
-const { data: userData } = await supabase.auth.getUser();
-const user = userData.user;
 
-const { data: existingProfile } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("id", user.id)
-  .single();
+      if (!quests || quests.length === 0) {
+        questList.innerHTML = "<p>Belum ada quest tersedia.</p>";
+        return;
+      }
 
-if (!existingProfile) {
-  await supabase.from("profiles").insert([
-    {
-      id: user.id,
-      username: user.email || "Player",
-      level: 1,
-      xp: 0,
-      next_level: 100,
-      created_at: new Date(),
-    },
-  ]);
-  console.log("✅ Profil baru dibuat untuk", user.email);
-
-      async function loadQuests() {
-        const questList = document.getElementById("quest-list");
-        questList.innerHTML = "<p>🔄 Memuat quest...</p>";
-
-        const { data: quests, error } = await supabase
-          .from("quests")
-          .select("*")
-          .order("created_at", { ascending: true });
-
-        if (error) {
-          questList.innerHTML = `<div class="error">⚠️ Gagal memuat quest: ${error.message}</div>`;
-          console.error(error);
-          return;
-        }
-
-        if (!quests || quests.length === 0) {
-          questList.innerHTML = "<p>Belum ada quest tersedia.</p>";
-          return;
-        }
-
-        questList.innerHTML = quests.map(
+      questList.innerHTML = quests
+        .map(
           (q) => `
-          <div class="quest-card" data-id="${q.id}" data-title="${q.title}" data-desc="${q.description}" data-reward="${q.reward}">
+          <div class="quest-card"
+               data-id="${q.id}"
+               data-title="${q.title}"
+               data-desc="${q.description}"
+               data-reward="${q.reward}">
             <div class="quest-title">🧭 ${q.title}</div>
             <div class="quest-desc">${q.description}</div>
             <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty}</em></div>
             <button class="btn-complete btn">✅ Selesaikan</button>
-          </div>`
-        ).join("");
+          </div>
+        `
+        )
+        .join("");
 
-        // Event tombol “Selesaikan”
-        document.querySelectorAll(".btn-complete").forEach((btn) => {
-          btn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const card = btn.closest(".quest-card");
-            const quest = {
-              id: card.dataset.id,
-              title: card.dataset.title,
-              description: card.dataset.desc,
-              reward: parseInt(card.dataset.reward)
-            };
-            await handleCompleteQuest(quest);
-          });
+      // Tombol “Selesaikan”
+      document.querySelectorAll(".btn-complete").forEach((button) => {
+        button.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const card = button.closest(".quest-card");
+          const quest = {
+            id: card.dataset.id,
+            title: card.dataset.title,
+            description: card.dataset.desc,
+            reward: parseInt(card.dataset.reward),
+          };
+          await handleCompleteQuest(quest);
         });
+      });
 
-        // Klik card → modal
-        document.querySelectorAll(".quest-card").forEach((card) => {
-          card.addEventListener("click", (e) => {
-            if (e.target.classList.contains("btn-complete")) return;
-            showQuestDetail(card.getAttribute("data-id"));
-          });
+      // Klik card untuk detail quest
+      document.querySelectorAll(".quest-card").forEach((card) => {
+        card.addEventListener("click", async (e) => {
+          if (e.target.classList.contains("btn-complete")) return;
+          const questId = card.getAttribute("data-id");
+          showQuestDetail(questId);
         });
-      }
+      });
+    }
 
-      async function handleCompleteQuest(quest) {
-        try {
-          const { data: userData } = await supabase.auth.getUser();
-          const user = userData.user;
-          if (!user) {
-            alert("Kamu harus login dulu!");
-            return;
-          }
-
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("xp")
-            .eq("id", user.id)
-            .single();
-
-          const newXP = (profile?.xp || 0) + quest.reward;
-
-          const { error } = await supabase
-            .from("profiles")
-            .update({ xp: newXP })
-            .eq("id", user.id);
-
-          if (error) throw error;
-
-          alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
-          loadPlayerXP();
-        } catch (err) {
-          console.error(err);
-          alert("Terjadi kesalahan saat menyelesaikan quest.");
-        }
-      }
-
-      async function showQuestDetail(id) {
-        const modal = document.getElementById("questModal");
-        const { data: quest, error } = await supabase
-          .from("quests")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (error || !quest) {
-          alert("Gagal memuat detail quest.");
-          console.error(error);
+    // 🎯 Fungsi selesaikan quest
+    async function handleCompleteQuest(quest) {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const user = userData.user;
+        if (!user) {
+          alert("Kamu harus login dulu!");
           return;
         }
 
-        document.getElementById("modalTitle").textContent = quest.title;
-        document.getElementById("modalDesc").textContent = quest.description;
-        document.getElementById("modalReward").textContent =
-          `🎁 Reward: ${quest.reward} XP — ${quest.difficulty}`;
-        modal.style.display = "flex";
-      }
-
-      async function loadPlayerXP() {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData.user;
         const { data: profile } = await supabase
           .from("profiles")
           .select("xp")
           .eq("id", user.id)
           .single();
 
-        const xp = profile?.xp || 0;
-        document.querySelector("#player-info p").textContent =
-          `Level: 1 | XP: ${xp} / 100`;
-        document.querySelector(".xp-fill").style.width = `${xp % 100}%`;
+        const newXP = (profile?.xp || 0) + quest.reward;
+
+        const { error } = await supabase
+          .from("profiles")
+          .update({ xp: newXP })
+          .eq("id", user.id);
+
+        if (error) throw error;
+
+        alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
+        loadPlayerXP();
+      } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan saat menyelesaikan quest.");
+      }
+    }
+
+    // 🔍 Fungsi tampilkan detail quest
+    async function showQuestDetail(id) {
+      const modal = document.getElementById("questModal");
+      const { data: quest, error } = await supabase
+        .from("quests")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error || !quest) {
+        alert("Gagal memuat detail quest.");
+        console.error(error);
+        return;
       }
 
-      document.getElementById("closeModal").addEventListener("click", () => {
+      document.getElementById("modalTitle").textContent = quest.title;
+      document.getElementById("modalDesc").textContent = quest.description;
+      document.getElementById(
+        "modalReward"
+      ).textContent = `🎁 Reward: ${quest.reward} XP — ${quest.difficulty}`;
+      modal.style.display = "flex";
+    }
+
+    // ⚡ Fungsi load XP player
+    async function loadPlayerXP() {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData.user;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("xp")
+        .eq("id", user.id)
+        .single();
+
+      const xp = profile?.xp || 0;
+      document.querySelector(
+        "#player-info p"
+      ).textContent = `Level: 1 | XP: ${xp} / 100`;
+      document.querySelector(".xp-fill").style.width = `${xp % 100}%`;
+    }
+
+    // 🔒 Tutup modal
+    document
+      .getElementById("closeModal")
+      .addEventListener("click", () => {
         document.getElementById("questModal").style.display = "none";
       });
 
-      document.getElementById("logout").addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        window.location.href = "index.html";
-      });
-
-      // 🔹 Klik tombol "Lihat Quest"
-      document.getElementById("btn-quest").addEventListener("click", loadQuests);
-
-      loadPlayerXP();
+    // 🚪 Logout
+    document.getElementById("logout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
     });
-  </script>
-</body>
-</html>
 
+    // 🚀 Jalankan fungsi utama
+    await loadPlayerXP();
+    await loadQuests();
+  });
+</script>
