@@ -252,6 +252,39 @@
         });
       });
     }
+    const handleCompleteQuest = async (quest) => {
+  try {
+    // misalnya user sudah login dan kita punya user.id
+    const user = supabase.auth.getUser();
+
+    if (!user) {
+      alert("Kamu harus login dulu!");
+      return;
+    }
+
+    // Ambil XP saat ini
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("xp")
+      .eq("id", user.id)
+      .single();
+
+    const newXP = (profile?.xp || 0) + quest.reward;
+
+    // Update XP user
+    const { error } = await supabase
+      .from("profiles")
+      .update({ xp: newXP })
+      .eq("id", user.id);
+
+    if (error) throw error;
+
+    alert(`Quest "${quest.title}" selesai! 🎉 XP bertambah ${quest.reward}`);
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan saat menyelesaikan quest.");
+  }
+};
 
     // Fungsi tampilkan detail quest
     async function showQuestDetail(id) {
@@ -290,4 +323,5 @@
   </script>
 </body>
 </html>
+
 
