@@ -239,79 +239,82 @@
         });
       });
     }
-
-    // 🎯 Fungsi selesaikan quest
-    async function handleCompleteQuest(quest) {
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData.user;
-        if (!user) {
-          alert("Kamu harus login dulu!");
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("xp")
-          .eq("id", user.id)
-          .single();
-
-        const newXP = (profile?.xp || 0) + quest.reward;
-
-        const { error } = await supabase
-          .from("profiles")
-          .update({ xp: newXP })
-          .eq("id", user.id);
-
-        if (error) throw error;
-
-        alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
-        loadPlayerXP();
-      } catch (err) {
-        console.error(err);
-        alert("Terjadi kesalahan saat menyelesaikan quest.");
-      }
+// 🎯 Fungsi selesaikan quest (update XP + refresh bar)
+async function handleCompleteQuest(quest) {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) {
+      alert("Kamu harus login dulu!");
+      return;
     }
 
-    // 🔍 Fungsi tampilkan detail quest
-    async function showQuestDetail(id) {
-      const modal = document.getElementById("questModal");
-      const { data: quest, error } = await supabase
-        .from("quests")
-        .select("*")
-        .eq("id", id)
-        .single();
+    // Ambil data profil
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("xp, level, next_level")
+      .eq("id", user.id)
+      .single();
 
-      if (error || !quest) {
-        alert("Gagal memuat detail quest.");
-        console.error(error);
-        return;
-      }
-
-      document.getElementById("modalTitle").textContent = quest.title;
-      document.getElementById("modalDesc").textContent = quest.description;
-      document.getElementById(
-        "modalReward"
-      ).textContent = `🎁 Reward: ${quest.reward} XP — ${quest.difficulty}`;
-      modal.style.display = "flex";
+    if (!profile) {
+      alert("Profil tidak ditemukan!");
+      return;
     }
 
-    // ⚡ Fungsi load XP player
-    async function loadPlayerXP() {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData.user;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("xp")
-        .eq("id", user.id)
-        .single();
+    // Hitung XP baru
+    let newXP = (profile.xp || 0) + quest.reward;
+    let newLevel = profile.level || 1;
+    let nextLevel = profile.next_level || 100;
 
-      const xp = profile?.xp || 0;
-      document.querySelector(
-        "#player-info p"
-      ).textContent = `Level: 1 | XP: ${xp} / 100`;
-      document.querySelector(".xp-fill").style.width = `${xp % 100}%`;
+    // Naik level otomatis
+    if (newXP >= nextLevel) {
+      newLevel++;
+      newXP = newXP - nextLevel;
+      nextLevel = Math.floor(nextLevel * 1.2);
+      alert(`🔥 Naik level! Sekarang kamu di level ${newLevel}.`);
     }
+
+    // Update ke Supabase
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        xp: newXP,
+        level: newLevel,
+        next_level: nextLevel,
+      })
+      .eq("id", user.id);
+
+    if (error) throw error;
+
+    alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
+    await loadPlayerXP(); // refresh tampilan XP bar
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan saat menyelesaikan quest.");
+  }
+}
+
+// ⚡ Fungsi load XP player (tampilkan bar dan level)
+async function loadPlayerXP() {
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("xp, level, next_level")
+    .eq("id", user.id)
+    .single();
+
+  const xp = profile?.xp || 0;
+  const level = profile?.level || 1;
+  const nextLevel = profile?.next_level || 100;
+  const progress = Math.min((xp / nextLevel) * 100, 100);
+
+  document.querySelector(
+    "#player-info p"
+  ).textContent = `Level: ${level} | XP: ${xp} / ${nextLevel}`;
+  document.querySelector(".xp-fill").style.width = `${progress}%`;
+}
 
     // 🔒 Tutup modal
     document
@@ -331,3 +334,4 @@
     await loadQuests();
   });
 </script>
+
