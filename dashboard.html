@@ -183,58 +183,69 @@
     // Definisikan fungsi penting DULU
     // -----------------------------
 
-    // Fungsi selesaikan quest (update XP + level logic)
-    async function handleCompleteQuest(quest) {
-      try {
-        const { data: userDataInner } = await supabase.auth.getUser();
-        const userInner = userDataInner.user;
-        if (!userInner) {
-          alert("Kamu harus login dulu!");
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("xp, level, next_level")
-          .eq("id", userInner.id)
-          .single();
-
-        if (!profile) {
-          alert("Profil tidak ditemukan!");
-          return;
-        }
-
-        // hitung XP baru & level up
-        let newXP = (profile.xp || 0) + quest.reward;
-        let newLevel = profile.level || 1;
-        let nextLevel = profile.next_level || 100;
-
-        if (newXP >= nextLevel) {
-          newXP = newXP - nextLevel;
-          newLevel = newLevel + 1;
-          nextLevel = Math.floor(nextLevel * 1.2);
-          // notifikasi level up
-          alert(`🔥 Naik level! Sekarang kamu di level ${newLevel}.`);
-        }
-
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            xp: newXP,
-            level: newLevel,
-            next_level: nextLevel,
-          })
-          .eq("id", userInner.id);
-
-        if (error) throw error;
-
-        alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
-        await loadPlayerXP(); // refresh tampilan
-      } catch (err) {
-        console.error(err);
-        alert("Terjadi kesalahan saat menyelesaikan quest.");
-      }
+    // 🎯 Fungsi selesaikan quest
+async function handleCompleteQuest(quest) {
+  try {
+    const { data: userDataInner } = await supabase.auth.getUser();
+    const userInner = userDataInner.user;
+    if (!userInner) {
+      alert("Kamu harus login dulu!");
+      return;
     }
+
+    // Pastikan profil ada
+    let { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("xp, level, next_level")
+      .eq("id", userInner.id)
+      .maybeSingle();
+
+    // Jika belum ada, buat profil baru dulu
+    if (!profile) {
+      await supabase.from("profiles").insert([
+        {
+          id: userInner.id,
+          username: userInner.email || "Player",
+          level: 1,
+          xp: 0,
+          next_level: 100,
+          created_at: new Date(),
+        },
+      ]);
+      profile = { xp: 0, level: 1, next_level: 100 };
+      console.log("🔧 Profil baru otomatis dibuat saat quest selesai.");
+    }
+
+    // Hitung XP baru & level up
+    let newXP = (profile.xp || 0) + quest.reward;
+    let newLevel = profile.level || 1;
+    let nextLevel = profile.next_level || 100;
+
+    if (newXP >= nextLevel) {
+      newXP -= nextLevel;
+      newLevel += 1;
+      nextLevel = Math.floor(nextLevel * 1.2);
+      alert(`🔥 Naik level! Sekarang kamu di level ${newLevel}.`);
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        xp: newXP,
+        level: newLevel,
+        next_level: nextLevel,
+      })
+      .eq("id", userInner.id);
+
+    if (error) throw error;
+
+    alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
+    await loadPlayerXP(); // refresh tampilan
+  } catch (err) {
+    console.error(err);
+    alert("Terjadi kesalahan saat menyelesaikan quest.");
+  }
+}
 
     // Fungsi tampilkan detail quest (modal)
     async function showQuestDetail(id) {
@@ -387,3 +398,4 @@
     // tidak auto-load quests; tunggu klik user (sesuai HTML asli)
   });
 </script>
+
