@@ -210,7 +210,7 @@
     document.getElementById("user-name").textContent = name;
     document.getElementById("user-avatar").src = avatar;
 
-    // 🔧 Pastikan profil ada
+    // Pastikan profil ada
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("xp, level, next_level, next_level_xp")
@@ -233,19 +233,22 @@
 
     const resolveNextLevel = (p) => p?.next_level ?? p?.next_level_xp ?? 100;
 
+    // ✅ FIXED: fungsi tambah XP dan refresh UI
     async function handleCompleteQuest(quest) {
       try {
         const { data: userDataInner } = await supabase.auth.getUser();
         const userInner = userDataInner.user;
         if (!userInner) return alert("Kamu harus login dulu!");
 
-        let { data: profile } = await supabase
+        let { data: profile, error: profileErr } = await supabase
           .from("profiles")
           .select("xp, level, next_level, next_level_xp")
           .eq("id", userInner.id)
           .maybeSingle();
 
+        if (profileErr) throw profileErr;
         if (!profile) {
+          profile = { xp: 0, level: 1, next_level: 100 };
           await supabase.from("profiles").insert({
             id: userInner.id,
             username: userInner.email || "Player",
@@ -253,9 +256,7 @@
             xp: 0,
             next_level: 100,
             next_level_xp: 100,
-            created_at: new Date(),
           });
-          profile = { xp: 0, level: 1, next_level: 100 };
         }
 
         let newXP = (profile.xp || 0) + quest.reward;
@@ -266,10 +267,11 @@
           newXP -= nextLevel;
           newLevel += 1;
           nextLevel = Math.floor(nextLevel * 1.2);
-          alert(`🔥 Naik level! Sekarang kamu di level ${newLevel}.`);
+          alert(`🔥 Level Up! Sekarang kamu di level ${newLevel}.`);
         }
 
-        await supabase
+        // update ke database
+        const { error: updateErr } = await supabase
           .from("profiles")
           .update({
             xp: newXP,
@@ -279,8 +281,13 @@
           })
           .eq("id", userInner.id);
 
-        alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
+        if (updateErr) throw updateErr;
+
+        // ✅ muat ulang data setelah update
+        await new Promise(r => setTimeout(r, 400)); // delay kecil agar DB sync
         await loadPlayerXP();
+
+        alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
       } catch (err) {
         console.error(err);
         alert("Terjadi kesalahan saat menyelesaikan quest.");
@@ -294,7 +301,6 @@
         .select("*")
         .eq("id", id)
         .single();
-
       if (!quest) return alert("Gagal memuat detail quest.");
       document.getElementById("modalTitle").textContent = quest.title;
       document.getElementById("modalDesc").textContent = quest.description;
@@ -303,19 +309,23 @@
       modal.style.display = "flex";
     }
 
+    // 🔁 Memuat XP user
     async function loadPlayerXP() {
       const { data: userDataInner } = await supabase.auth.getUser();
       const userInner = userDataInner.user;
       if (!userInner) return;
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("xp, level, next_level, next_level_xp")
         .eq("id", userInner.id)
         .single();
+
       const xp = profile?.xp || 0;
       const level = profile?.level || 1;
       const nextLevel = resolveNextLevel(profile);
       const progress = Math.min((xp / nextLevel) * 100, 100);
+
       document.querySelector("#player-info p").textContent =
         `Level: ${level} | XP: ${xp} / ${nextLevel}`;
       document.querySelector(".xp-fill").style.width = `${progress}%`;
@@ -371,14 +381,18 @@
 
     document.getElementById("closeModal").onclick = () =>
       (document.getElementById("questModal").style.display = "none");
+
     document.getElementById("logout").onclick = async () => {
       await supabase.auth.signOut();
       window.location.href = "index.html";
     };
+
     document.getElementById("btn-quest").onclick = loadQuests;
 
     await loadPlayerXP();
   });
 </script>
+
 </body>
 </html>
+
