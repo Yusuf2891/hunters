@@ -6,7 +6,7 @@
   <title>HunterVerse — Login</title>
   <style>
     body {
-      font-family: Poppins, sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: radial-gradient(circle at top, #0b1220, #050910);
       color: #e6eef6;
       display: flex;
@@ -18,10 +18,13 @@
     .card {
       background: rgba(255,255,255,0.05);
       padding: 24px;
-      border-radius: 12px;
+      border-radius: 16px;
       min-width: 320px;
       text-align: center;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      box-shadow: 0 0 25px rgba(0,0,0,0.5);
+    }
+    h2 {
+      margin-bottom: 1rem;
     }
     input {
       margin-top: 10px;
@@ -30,6 +33,11 @@
       border-radius: 8px;
       width: 100%;
       font-size: 15px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    input:focus {
+      outline: 2px solid #00ffe0;
     }
     button {
       margin-top: 18px;
@@ -41,87 +49,105 @@
       font-weight: 600;
       cursor: pointer;
       width: 100%;
+      transition: 0.2s;
     }
     button:hover { background: #00c2ac; transform: scale(1.03); }
     a { color: #00ffe0; cursor: pointer; }
+    .msg { font-size: 14px; margin-top: 8px; color: #a0ffea; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Login HunterVerse</h2>
+    <h2>🌌 HunterVerse Login</h2>
     <input id="email" type="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
     <button id="loginBtn">Masuk</button>
     <p>Belum punya akun? <a id="registerLink">Daftar</a></p>
+    <p id="msg" class="msg hidden"></p>
   </div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://xkvqyxkuoodifkqobzym.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrdnF5eGt1b29kaWZrcW9ienltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTIzMzYsImV4cCI6MjA3NjQ2ODMzNn0.jBhV6-HF7VyUWkUiYwTXDxp6UmLXOTqn9KC9fdMWAXI";
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const emailEl = document.getElementById("email");
     const passwordEl = document.getElementById("password");
     const loginBtn = document.getElementById("loginBtn");
     const registerLink = document.getElementById("registerLink");
+    const msg = document.getElementById("msg");
 
-    // Cek session login
+    const showMsg = (text, isError = false) => {
+      msg.textContent = text;
+      msg.style.color = isError ? "#ff8080" : "#a0ffea";
+      msg.classList.remove("hidden");
+    };
+
+    // 🔍 Cek session login aktif
     async function checkSession() {
-      const { data, error } = await supabase.auth.getSession();
-      if (data?.session) window.location.href = "dashboard.html";
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        window.location.href = "dashboard.html";
+      }
     }
     checkSession();
 
-    // LOGIN
+    // 🔐 LOGIN
     loginBtn.addEventListener("click", async () => {
       const email = emailEl.value.trim();
       const password = passwordEl.value.trim();
-      if (!email || !password) return alert("Isi email dan password!");
+      if (!email || !password) return showMsg("Isi email dan password!", true);
+
+      showMsg("⏳ Sedang masuk...");
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return alert("Gagal login: " + error.message);
+      if (error) return showMsg("Gagal login: " + error.message, true);
 
-      alert("Berhasil login!");
-      window.location.href = "dashboard.html";
+      showMsg("✅ Berhasil login! Mengarahkan...");
+      setTimeout(() => (window.location.href = "dashboard.html"), 800);
     });
 
-    // REGISTER + AUTO INSERT PROFILE
+    // 🪄 REGISTER + AUTO INSERT PROFILE
     registerLink.addEventListener("click", async () => {
-      const email = prompt("Masukkan email:");
+      const email = prompt("Masukkan email baru:");
       const password = prompt("Masukkan password:");
       if (!email || !password) return alert("Isi email dan password!");
 
       try {
+        showMsg("Mendaftarkan akun...");
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
 
-        // Tunggu session user
         const user = data.user;
         if (!user) {
-          alert("Pendaftaran berhasil! Silakan verifikasi email Anda sebelum login.");
+          showMsg("Daftar berhasil! Cek email untuk verifikasi.", false);
           return;
         }
 
-        // Auto insert profil ke tabel "profiles"
+        // Pastikan profil dibuat otomatis
         const { error: insertError } = await supabase.from("profiles").insert({
           id: user.id,
           username: email.split("@")[0],
           level: 1,
           xp: 0,
           next_level_xp: 100,
+          created_at: new Date(),
         });
 
         if (insertError) {
-          console.error("Gagal buat profil:", insertError);
-          alert("Akun dibuat, tapi gagal menambahkan profil. Silakan hubungi admin.");
+          console.error(insertError);
+          showMsg("Akun dibuat, tapi gagal menambahkan profil.", true);
         } else {
-          alert("Pendaftaran berhasil! Profil berhasil dibuat 🎉");
+          showMsg("✅ Pendaftaran berhasil! Profil berhasil dibuat 🎉");
         }
       } catch (err) {
-        alert("Gagal daftar: " + err.message);
         console.error(err);
+        showMsg("Gagal daftar: " + err.message, true);
       }
     });
   </script>
