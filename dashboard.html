@@ -5,89 +5,157 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quest Board</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(180deg, #111, #222);
-      color: white;
+      background: radial-gradient(circle at top, #0a0f1a, #000);
+      color: #e0f7ff;
       text-align: center;
       margin: 0;
       padding: 0;
     }
+
     header {
-      background: #1f1f1f;
+      background: rgba(0, 10, 30, 0.9);
+      border-bottom: 2px solid #00b3ff;
+      box-shadow: 0 0 20px rgba(0, 179, 255, 0.3);
       padding: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       position: sticky;
       top: 0;
+      z-index: 10;
     }
-    h1 { margin: 0; font-size: 1.5rem; }
-    #player-info { margin-top: 1rem; }
-    #username { font-size: 1.1rem; font-weight: 600; color: #00ffb7; margin-bottom: 0.3rem; }
+
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #00b3ff;
+      text-shadow: 0 0 10px #00b3ff;
+    }
+
+    #player-info {
+      margin-top: 1rem;
+      background: rgba(0, 30, 60, 0.6);
+      padding: 1rem;
+      border-radius: 15px;
+      box-shadow: inset 0 0 20px rgba(0, 179, 255, 0.2);
+      width: 90%;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .user-profile img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #00b3ff;
+      box-shadow: 0 0 10px #00b3ff;
+    }
+
+    .user-profile span {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #aee6ff;
+    }
+
     .xp-bar {
-      background: #444;
+      background: #033;
       width: 80%;
       margin: 10px auto;
       border-radius: 20px;
       overflow: hidden;
       height: 14px;
+      box-shadow: 0 0 10px #00b3ff inset;
     }
+
     .xp-fill {
-      background: linear-gradient(90deg, #00ff88, #00b3ff);
+      background: linear-gradient(90deg, #00ffcc, #00b3ff);
       height: 100%;
       width: 0%;
       transition: width 0.5s;
+      box-shadow: 0 0 8px #00b3ff;
     }
+
     .btn {
       padding: 10px 20px;
       margin: 5px;
-      background: #00b3ff;
+      background: linear-gradient(90deg, #00b3ff, #0066ff);
       color: white;
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: 0.2s;
+      transition: 0.3s;
+      box-shadow: 0 0 10px #00b3ff;
     }
-    .btn:hover { background: #0088cc; }
+
+    .btn:hover {
+      background: linear-gradient(90deg, #00e0ff, #0077ff);
+      box-shadow: 0 0 20px #00b3ff;
+    }
+
     .quest-card {
-      background: #2b2b2b;
+      background: rgba(0, 30, 60, 0.8);
+      border: 1px solid #004b80;
       margin: 10px auto;
       width: 90%;
       max-width: 400px;
       padding: 1rem;
       border-radius: 15px;
       text-align: left;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 0 15px rgba(0,179,255,0.2);
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: transform 0.2s, box-shadow 0.3s;
     }
-    .quest-card:hover { transform: scale(1.03); background: #333; }
-    .quest-title { font-weight: bold; font-size: 1.1rem; }
-    .quest-desc { font-size: 0.9rem; margin: 5px 0; }
+
+    .quest-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 25px rgba(0,179,255,0.5);
+    }
+
+    .quest-title { font-weight: bold; font-size: 1.1rem; color: #00e0ff; }
+    .quest-desc { font-size: 0.9rem; margin: 5px 0; color: #b8eaff; }
     .quest-reward { color: #00ff99; font-size: 0.9rem; }
+
     #questModal {
       display: none; position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.85);
       justify-content: center;
       align-items: center;
     }
+
     .modal-content {
-      background: #222;
+      background: rgba(0,20,40,0.95);
       padding: 2rem;
       border-radius: 15px;
       width: 90%;
       max-width: 400px;
       position: relative;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 0 20px #00b3ff;
+      border: 1px solid #0077ff;
+      color: #dff9ff;
     }
+
     .close {
       position: absolute;
       top: 10px; right: 15px;
       cursor: pointer;
-      color: #ccc; font-size: 1.3rem;
+      color: #00b3ff;
+      font-size: 1.5rem;
+      transition: 0.3s;
     }
-    .close:hover { color: white; }
+
+    .close:hover { color: #00e0ff; text-shadow: 0 0 10px #00b3ff; }
   </style>
 </head>
 
@@ -95,7 +163,10 @@
   <header>
     <h1>🏆 Quest Board</h1>
     <div id="player-info">
-      <p id="username">Memuat...</p>
+      <div class="user-profile">
+        <img id="user-avatar" src="https://cdn-icons-png.flaticon.com/512/1077/1077012.png" alt="Avatar">
+        <span id="user-name">Player</span>
+      </div>
       <p>Level: 1 | XP: 0 / 100</p>
       <div class="xp-bar"><div class="xp-fill"></div></div>
       <button id="btn-quest" class="btn">🎯 Lihat Quest</button>
@@ -133,39 +204,180 @@
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
 
-    // Ambil data profile untuk nama & xp
-    const { data: profile, error } = await supabase
+    // 🧑 Tambahkan nama dan foto profil
+    const name = user.user_metadata?.name || user.email || "Player";
+    const avatar = user.user_metadata?.avatar_url || "https://cdn-icons-png.flaticon.com/512/1077/1077012.png";
+    document.getElementById("user-name").textContent = name;
+    document.getElementById("user-avatar").src = avatar;
+
+    // 🔧 Pastikan profil ada
+    const { data: existingProfile } = await supabase
       .from("profiles")
-      .select("username, xp, level, next_level_xp")
+      .select("xp, level, next_level, next_level_xp")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (error) console.error(error);
+    if (!existingProfile) {
+      await supabase.from("profiles").insert([
+        {
+          id: user.id,
+          username: user.email || "Player",
+          level: 1,
+          xp: 0,
+          next_level: 100,
+          next_level_xp: 100,
+          created_at: new Date(),
+        },
+      ]);
+    }
 
-    // Tampilkan nama di dashboard
-    const usernameEl = document.getElementById("username");
-    usernameEl.textContent = profile?.username
-      ? `Selamat datang, ${profile.username}!`
-      : `Selamat datang, ${user.email.split("@")[0]}!`;
+    const resolveNextLevel = (p) => p?.next_level ?? p?.next_level_xp ?? 100;
 
-    // Update XP bar
+    async function handleCompleteQuest(quest) {
+      try {
+        const { data: userDataInner } = await supabase.auth.getUser();
+        const userInner = userDataInner.user;
+        if (!userInner) return alert("Kamu harus login dulu!");
+
+        let { data: profile } = await supabase
+          .from("profiles")
+          .select("xp, level, next_level, next_level_xp")
+          .eq("id", userInner.id)
+          .maybeSingle();
+
+        if (!profile) {
+          await supabase.from("profiles").insert({
+            id: userInner.id,
+            username: userInner.email || "Player",
+            level: 1,
+            xp: 0,
+            next_level: 100,
+            next_level_xp: 100,
+            created_at: new Date(),
+          });
+          profile = { xp: 0, level: 1, next_level: 100 };
+        }
+
+        let newXP = (profile.xp || 0) + quest.reward;
+        let newLevel = profile.level || 1;
+        let nextLevel = resolveNextLevel(profile);
+
+        if (newXP >= nextLevel) {
+          newXP -= nextLevel;
+          newLevel += 1;
+          nextLevel = Math.floor(nextLevel * 1.2);
+          alert(`🔥 Naik level! Sekarang kamu di level ${newLevel}.`);
+        }
+
+        await supabase
+          .from("profiles")
+          .update({
+            xp: newXP,
+            level: newLevel,
+            next_level: nextLevel,
+            next_level_xp: nextLevel,
+          })
+          .eq("id", userInner.id);
+
+        alert(`🎉 Quest "${quest.title}" selesai! XP bertambah ${quest.reward}.`);
+        await loadPlayerXP();
+      } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan saat menyelesaikan quest.");
+      }
+    }
+
+    async function showQuestDetail(id) {
+      const modal = document.getElementById("questModal");
+      const { data: quest } = await supabase
+        .from("quests")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (!quest) return alert("Gagal memuat detail quest.");
+      document.getElementById("modalTitle").textContent = quest.title;
+      document.getElementById("modalDesc").textContent = quest.description;
+      document.getElementById("modalReward").textContent =
+        `🎁 Reward: ${quest.reward} XP — ${quest.difficulty}`;
+      modal.style.display = "flex";
+    }
+
     async function loadPlayerXP() {
+      const { data: userDataInner } = await supabase.auth.getUser();
+      const userInner = userDataInner.user;
+      if (!userInner) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("xp, level, next_level, next_level_xp")
+        .eq("id", userInner.id)
+        .single();
       const xp = profile?.xp || 0;
       const level = profile?.level || 1;
-      const nextLevel = profile?.next_level_xp || 100;
+      const nextLevel = resolveNextLevel(profile);
       const progress = Math.min((xp / nextLevel) * 100, 100);
-      document.querySelector("#player-info p:nth-of-type(2)").textContent =
+      document.querySelector("#player-info p").textContent =
         `Level: ${level} | XP: ${xp} / ${nextLevel}`;
       document.querySelector(".xp-fill").style.width = `${progress}%`;
     }
 
-    await loadPlayerXP();
+    async function loadQuests() {
+      const questList = document.getElementById("quest-list");
+      questList.innerHTML = "<p>🔄 Memuat quest...</p>";
+      const { data: quests } = await supabase
+        .from("quests")
+        .select("*")
+        .order("created_at", { ascending: true });
 
-    // Tombol logout
+      if (!quests?.length) {
+        questList.innerHTML = "<p>Belum ada quest tersedia.</p>";
+        return;
+      }
+
+      questList.innerHTML = quests.map(q => `
+        <div class="quest-card" data-id="${q.id}">
+          <div class="quest-title">🧭 ${q.title}</div>
+          <div class="quest-desc">${q.description || ''}</div>
+          <div class="quest-reward">🎁 Reward: ${q.reward} XP — <em>${q.difficulty || ''}</em></div>
+          <button class="btn btn-complete">✅ Selesaikan</button>
+        </div>
+      `).join("");
+
+      document.querySelectorAll(".btn-complete").forEach(btn => {
+        btn.addEventListener("click", async e => {
+          e.stopPropagation();
+          const card = btn.closest(".quest-card");
+          const quest = {
+            id: card.dataset.id,
+            title: card.querySelector(".quest-title").textContent.replace("🧭 ", ""),
+            reward: parseInt(card.querySelector(".quest-reward").textContent.match(/\d+/)) || 0
+          };
+          btn.disabled = true;
+          btn.textContent = "⏳...";
+          await handleCompleteQuest(quest);
+          btn.textContent = "✔️ Selesai";
+          btn.disabled = true;
+          card.style.opacity = "0.6";
+        });
+      });
+
+      document.querySelectorAll(".quest-card").forEach(card => {
+        card.addEventListener("click", e => {
+          if (!e.target.classList.contains("btn-complete"))
+            showQuestDetail(card.dataset.id);
+        });
+      });
+    }
+
+    document.getElementById("closeModal").onclick = () =>
+      (document.getElementById("questModal").style.display = "none");
     document.getElementById("logout").onclick = async () => {
       await supabase.auth.signOut();
       window.location.href = "index.html";
     };
+    document.getElementById("btn-quest").onclick = loadQuests;
+
+    await loadPlayerXP();
   });
 </script>
 </body>
