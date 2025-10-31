@@ -344,6 +344,18 @@
           const { data: newP } = await supabase.from("profiles").select("*").eq("id", userInner.id).maybeSingle();
           currentProfile = newP || { xp: 0, level: 1 };
         }
+        // Ambil daftar quest yang sudah diselesaikan dari localStorage
+const completed = JSON.parse(localStorage.getItem("completedQuests") || "[]");
+
+// Filter hanya yang belum selesai
+const activeQuests = quests.filter(q => !completed.includes(q.id));
+
+// Render quest aktif saja
+if (activeQuests.length === 0) {
+  questContainer.innerHTML = "<p>Tidak ada quest baru 🌿</p>";
+} else {
+  renderQuests(activeQuests);
+}
 
         const currentXP = currentProfile?.xp ?? 0;
         const currentLevel = currentProfile?.level ?? 1;
@@ -463,6 +475,20 @@
     // Jalankan fungsi penyelesaian quest
     await handleCompleteQuest(quest);
 
+// Tandai quest sebagai selesai di localStorage agar tidak muncul lagi
+let completed = JSON.parse(localStorage.getItem("completedQuests") || "[]");
+completed.push(quest.id);
+localStorage.setItem("completedQuests", JSON.stringify(completed));
+
+// Efek hilang lembut
+btn.textContent = "✔️ Selesai";
+btn.disabled = true;
+card.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+card.style.opacity = "0";
+card.style.transform = "scale(0.95)";
+setTimeout(() => card.remove(), 500);
+
+
     // Ubah tampilan
     btn.textContent = "✔️ Selesai";
     btn.disabled = true;
@@ -510,6 +536,7 @@
 
 </body>
 </html>
+
 
 
 
