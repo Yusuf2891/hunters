@@ -344,18 +344,6 @@
           const { data: newP } = await supabase.from("profiles").select("*").eq("id", userInner.id).maybeSingle();
           currentProfile = newP || { xp: 0, level: 1 };
         }
-        // Ambil daftar quest yang sudah diselesaikan dari localStorage
-const completed = JSON.parse(localStorage.getItem("completedQuests") || "[]");
-
-// Filter hanya yang belum selesai
-const activeQuests = quests.filter(q => !completed.includes(q.id));
-
-// Render quest aktif saja
-if (activeQuests.length === 0) {
-  questContainer.innerHTML = "<p>Tidak ada quest baru 🌿</p>";
-} else {
-  renderQuests(activeQuests);
-}
 
         const currentXP = currentProfile?.xp ?? 0;
         const currentLevel = currentProfile?.level ?? 1;
@@ -536,6 +524,7 @@ setTimeout(() => card.remove(), 500);
 
 </body>
 </html>
+
 
 
 
