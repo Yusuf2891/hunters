@@ -272,6 +272,46 @@
         100
       );
     }
+    async function handleCompleteQuest(quest) {
+  const session = await supabase.auth.getSession();
+  const userEmail = session.data.session?.user?.email;
+  const adminEmail = "yusuffaith28@gmail.com";
+
+  // Validasi email
+  if (userEmail !== adminEmail) {
+    alert("❌ Hanya admin yang bisa menyelesaikan quest ini.");
+    return;
+  }
+
+  try {
+    // lanjutkan logika update XP, level, dsb...
+    console.log(`✅ Quest '${quest.title}' selesai oleh admin: ${userEmail}`);
+
+    // contoh update ke Supabase
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("username", userEmail)
+      .single();
+
+    const newXp = profile.xp + quest.reward;
+    const newLevel = newXp >= profile.next_level_xp ? profile.level + 1 : profile.level;
+    const nextLevelXp = profile.next_level_xp + 20; // contoh kenaikan
+
+    await supabase
+      .from("profiles")
+      .update({
+        xp: newXp,
+        level: newLevel,
+        next_level_xp: nextLevelXp,
+      })
+      .eq("id", profile.id);
+
+  } catch (error) {
+    console.error("Update profile error:", error);
+  }
+}
+
 
     // ---- fungsi untuk load dan tampilkan XP & level ----
     async function loadPlayerXP() {
@@ -524,6 +564,7 @@ setTimeout(() => card.remove(), 500);
 
 </body>
 </html>
+
 
 
 
