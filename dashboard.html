@@ -402,6 +402,7 @@
           .select("*")
           .eq("id", id)
           .single();
+        .neq('status', 'completed'); // <--- tambahkan ini
         if (error || !quest) {
           alert("Gagal memuat detail quest.");
           return;
@@ -496,4 +497,5 @@
 
 </body>
 </html>
+
 
