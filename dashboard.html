@@ -446,24 +446,38 @@
         `).join("");
 
         document.querySelectorAll(".btn-complete").forEach(btn => {
-          btn.addEventListener("click", async e => {
-            e.stopPropagation();
-            const card = btn.closest(".quest-card");
-            const title = card.querySelector(".quest-title")?.textContent?.replace("🧭 ", "") || "Quest";
-            const rewardText = card.querySelector(".quest-reward")?.textContent || "0";
-            const rewardMatch = rewardText.match(/\d+/);
-            const reward = rewardMatch ? parseInt(rewardMatch[0]) : 0;
+  btn.addEventListener("click", async e => {
+    e.stopPropagation();
+    const card = btn.closest(".quest-card");
+    const title = card.querySelector(".quest-title")?.textContent?.replace("🧭 ", "") || "Quest";
+    const rewardText = card.querySelector(".quest-reward")?.textContent || "0";
+    const rewardMatch = rewardText.match(/\d+/);
+    const reward = rewardMatch ? parseInt(rewardMatch[0]) : 0;
 
-            const quest = { id: card.dataset.id, title, reward };
+    const quest = { id: card.dataset.id, title, reward };
 
-            btn.disabled = true;
-            btn.textContent = "⏳...";
-            await handleCompleteQuest(quest);
-            btn.textContent = "✔️ Selesai";
-            btn.disabled = true;
-            card.style.opacity = "0.6";
-          });
-        });
+    // Ganti teks tombol
+    btn.disabled = true;
+    btn.textContent = "⏳...";
+
+    // Jalankan fungsi penyelesaian quest
+    await handleCompleteQuest(quest);
+
+    // Ubah tampilan
+    btn.textContent = "✔️ Selesai";
+    btn.disabled = true;
+
+    // Efek fade-out sebelum menghapus
+    card.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+    card.style.opacity = "0";
+    card.style.transform = "scale(0.95)";
+
+    // Hapus dari DOM setelah animasi selesai
+    setTimeout(() => {
+      card.remove();
+    }, 500);
+  });
+});
 
         document.querySelectorAll(".quest-card").forEach(card => {
           card.addEventListener("click", e => {
@@ -496,6 +510,7 @@
 
 </body>
 </html>
+
 
 
 
